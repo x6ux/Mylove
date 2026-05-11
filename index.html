@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat</title>
+  <title>Chat App - Instagram Style</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -12,259 +12,118 @@
       --text3: #6b6b6b; --bubble-them: #262626; --bubble-me: #0095f6;
       --hover: #1a1a1a; --online: #0095f6;
     }
-    body { font-family: -apple-system, sans-serif; background: var(--bg); height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    body { font-family: -apple-system, sans-serif; background: var(--bg); height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
 
     /* LOGIN */
     .login-screen { width: 100%; max-width: 360px; padding: 40px 32px; display: flex; flex-direction: column; gap: 16px; background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border); }
     .login-screen h2 { font-size: 22px; font-weight: 600; color: var(--text); text-align: center; }
-    .login-screen input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); outline: none; }
+    .login-screen input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); outline: none; text-align: center; }
     .login-btn { width: 100%; background: #0095f6; border: none; border-radius: 8px; padding: 11px; font-weight: 600; color: #fff; cursor: pointer; }
 
-    /* AVATAR UPLOAD in login */
+    /* AVATAR UPLOAD */
     .avatar-upload-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .avatar-upload-circle { width: 80px; height: 80px; border-radius: 50%; background: var(--bg-elevated); border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 28px; overflow: hidden; position: relative; transition: border-color .2s; }
-    .avatar-upload-circle:hover { border-color: var(--online); }
+    .avatar-upload-circle { width: 80px; height: 80px; border-radius: 50%; background: var(--bg-elevated); border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 28px; overflow: hidden; position: relative; }
     .avatar-upload-circle img { width: 100%; height: 100%; object-fit: cover; }
     .avatar-upload-circle input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .avatar-upload-label { font-size: 12px; color: var(--text2); }
 
-    /* APP */
+    /* APP STRUCTURE */
     .app { display: none; width: 100%; max-width: 960px; height: 100dvh; background: var(--bg); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
     .wrap { display: flex; height: 100%; }
-    .sidebar { width: 300px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar { width: 300px; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
     .sb-top { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
     .sb-username { font-size: 15px; font-weight: 600; color: var(--text); }
-    .my-avatar-sb { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: var(--bg-elevated); cursor: pointer; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--online); font-weight: bold; font-size: 14px; overflow: hidden; }
+    .my-avatar-sb { width: 34px; height: 34px; border-radius: 50%; background: var(--bg-elevated); cursor: pointer; border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; }
     .my-avatar-sb img { width: 100%; height: 100%; object-fit: cover; }
+    
     .search-wrap { padding: 8px 10px; border-bottom: 1px solid var(--border); }
     .search-wrap input { width: 100%; background: var(--bg-elevated); border: none; border-radius: 8px; padding: 7px 12px; color: var(--text); outline: none; }
+    
     .users-list { flex: 1; overflow-y: auto; }
-    .user-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; }
+    .user-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; transition: 0.2s; }
     .user-item:hover, .user-item.active { background: var(--hover); }
-    .avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-shrink: 0; }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .online-ring { position: absolute; bottom: 1px; right: 1px; width: 11px; height: 11px; border-radius: 50%; background: var(--online); border: 2px solid var(--bg); z-index: 2; }
+    
+    .avatar { width: 48px; height: 48px; border-radius: 50%; position: relative; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #262626; }
+    .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .online-ring { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #4cd964; border: 2px solid var(--bg); }
+
+    /* UNREAD BADGE */
+    .unread-badge { background: #ff3b30; color: white; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 10px; min-width: 18px; text-align: center; margin-right: auto; }
+
+    /* NOTIFICATION TOAST */
+    .push-notif { position: fixed; top: 20px; left: 20px; background: var(--bg-surface); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; animation: slideIn 0.3s ease-out; cursor: pointer; max-width: 250px; }
+    @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
     .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-    .chat-header { padding: 11px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .messages { flex: 1; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 6px; }
-    .msg-row { display: flex; align-items: flex-end; gap: 6px; }
+    .chat-header { padding: 11px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    
+    .msg-row { display: flex; align-items: flex-end; gap: 8px; }
     .msg-row.me { flex-direction: row-reverse; }
-    .bubble { max-width: 68%; padding: 9px 13px; font-size: 14px; border-radius: 18px; word-break: break-word; }
-    .bubble.them { background: var(--bubble-them); color: var(--text); border-bottom-left-radius: 4px; }
-    .bubble.me { background: var(--bubble-me); color: #fff; border-bottom-right-radius: 4px; }
-    .bubble.img-bubble { padding: 3px; background: transparent; }
-    .bubble.img-bubble img { max-width: 220px; border-radius: 14px; display: block; }
-    .bubble.voice-bubble { display: flex; align-items: center; gap: 8px; min-width: 160px; }
-    .voice-play-btn { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.15); border: none; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .voice-wave { flex: 1; height: 28px; display: flex; align-items: center; gap: 1.5px; }
-    .voice-bar { width: 3px; background: rgba(255,255,255,.5); border-radius: 2px; animation: none; }
-    .voice-duration { font-size: 11px; opacity: .8; }
-    .input-area { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; gap: 6px; align-items: flex-end; position: relative; }
-    .msg-input { flex: 1; border-radius: 20px; padding: 9px 14px; background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); outline: none; resize: none; max-height: 80px; font-size: 14px; }
-    .send-btn { background: none; border: none; color: var(--online); font-weight: 600; cursor: pointer; padding: 4px; }
-    .icon-btn { background: none; border: none; color: var(--text2); cursor: pointer; padding: 4px; flex-shrink: 0; display: flex; align-items: center; }
-    .icon-btn:hover { color: var(--text); }
+    .bubble { max-width: 70%; padding: 9px 14px; font-size: 14px; border-radius: 18px; line-height: 1.4; word-break: break-word; }
+    .bubble.them { background: var(--bubble-them); color: var(--text); border-bottom-right-radius: 4px; }
+    .bubble.me { background: var(--bubble-me); color: #fff; border-bottom-left-radius: 4px; }
 
-    /* EMOJI PICKER */
-    .emoji-picker { position: absolute; bottom: 65px; left: 12px; width: 300px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 10px; z-index: 100; display: none; box-shadow: 0 8px 30px rgba(0,0,0,.6); }
-    .emoji-picker.open { display: block; }
-    .emoji-categories { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
-    .emoji-cat-btn { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 6px; opacity: .6; }
-    .emoji-cat-btn:hover, .emoji-cat-btn.active { background: var(--border); opacity: 1; }
-    .emoji-search { width: 100%; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text); outline: none; font-size: 13px; margin-bottom: 8px; }
-    .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; max-height: 180px; overflow-y: auto; }
-    .emoji-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px; border-radius: 6px; text-align: center; line-height: 1; }
-    .emoji-btn:hover { background: var(--border); }
+    .input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+    .msg-input { flex: 1; border-radius: 20px; padding: 10px 16px; background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); outline: none; resize: none; max-height: 100px; }
+    .send-btn { background: none; border: none; color: var(--online); font-weight: 700; cursor: pointer; display: none; }
+    .icon-btn { background: none; border: none; color: var(--text2); cursor: pointer; display: flex; align-items: center; }
 
-    /* CAMERA MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 200; display: none; align-items: center; justify-content: center; }
-    .modal-overlay.open { display: flex; }
-    .camera-modal { background: var(--bg-surface); border-radius: 16px; padding: 20px; width: 340px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--border); }
-    .camera-modal h3 { color: var(--text); font-size: 16px; font-weight: 600; }
-    #cameraPreview { width: 100%; border-radius: 10px; background: #000; display: block; }
-    .camera-controls { display: flex; gap: 10px; justify-content: center; }
-    .cam-btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
-    .cam-btn.primary { background: var(--online); color: #fff; }
-    .cam-btn.danger { background: #ff4444; color: #fff; }
-    .cam-btn.secondary { background: var(--bg-elevated); color: var(--text); }
-    #captureCanvas { display: none; }
-
-    /* VOICE RECORDING */
-    .recording-bar { position: absolute; bottom: 65px; left: 12px; right: 12px; background: #1a1a2e; border: 1px solid #0095f6; border-radius: 20px; padding: 10px 16px; display: none; align-items: center; gap: 10px; z-index: 50; }
-    .recording-bar.active { display: flex; }
-    .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff4444; animation: blink 1s infinite; flex-shrink: 0; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-    .rec-time { color: var(--text); font-size: 14px; font-weight: 600; flex: 1; }
-    .rec-cancel { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 13px; }
-    .rec-send { background: var(--online); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-    /* PROFILE MODAL */
-    .profile-modal { background: var(--bg-surface); border-radius: 16px; padding: 24px; width: 320px; display: flex; flex-direction: column; gap: 16px; border: 1px solid var(--border); }
-    .profile-modal h3 { color: var(--text); font-size: 16px; font-weight: 600; text-align: center; }
-    .profile-avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .profile-avatar-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--bg-elevated); border: 3px solid var(--online); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--online); font-size: 32px; font-weight: bold; overflow: hidden; position: relative; }
-    .profile-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
-    .profile-avatar-circle input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .profile-change-photo { font-size: 13px; color: var(--online); cursor: pointer; }
-    .profile-modal input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); outline: none; font-size: 14px; }
-    .profile-modal input:focus { border-color: var(--online); }
-    .profile-save-btn { background: var(--online); border: none; border-radius: 8px; padding: 11px; font-weight: 600; color: #fff; cursor: pointer; width: 100%; }
-    .profile-cancel-btn { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 9px; font-weight: 600; color: var(--text2); cursor: pointer; width: 100%; }
-
-    /* IMAGE MESSAGE from file */
-    .img-msg-preview { position: absolute; bottom: 65px; left: 12px; right: 12px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: none; align-items: center; gap: 10px; z-index: 50; }
-    .img-msg-preview.active { display: flex; }
-    .img-msg-preview img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
-    .img-msg-preview-cancel { background: none; border: none; color: var(--text2); cursor: pointer; margin-left: auto; }
-
-    @media(max-width:640px) {
-      .sidebar.hidden, .chat-area.hidden { display: none; }
-      .emoji-picker { width: calc(100vw - 24px); }
+    @media(max-width: 640px) {
+      .sidebar.hidden { display: none; }
+      .chat-area.hidden { display: none; }
+      .sidebar { width: 100%; border: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
-  <h2>Chat</h2>
-  <p style="color: var(--text2); text-align: center; font-size: 13px;">Enter your name to start chatting</p>
+  <h2>Chat App</h2>
   <div class="avatar-upload-wrap">
-    <div class="avatar-upload-circle" id="loginAvatarCircle">
+    <div class="avatar-upload-circle">
       <span id="loginAvatarIcon">📷</span>
-      <img id="loginAvatarPreview" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%;">
+      <img id="loginAvatarPreview" style="display:none;">
       <input type="file" accept="image/*" id="loginAvatarInput">
     </div>
-    <span class="avatar-upload-label">Add profile photo (optional)</span>
   </div>
-  <input type="text" id="nameInput" placeholder="Your name" maxlength="20">
-  <div id="loginError" style="color: #ff4444; font-size: 12px; display: none; text-align: center;">Please enter your name</div>
-  <button class="login-btn" id="loginBtn">Start chatting</button>
+  <input type="text" id="nameInput" placeholder="ادخل اسمك هنا" maxlength="20">
+  <button class="login-btn" id="loginBtn">دخول</button>
 </div>
 
-<!-- APP -->
 <div class="app" id="app">
   <div class="wrap">
     <div class="sidebar" id="sidebar">
       <div class="sb-top">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div class="my-avatar-sb" id="myAvatarSb" onclick="openProfileModal()"></div>
-          <span class="sb-username" id="myNameLabel"></span>
-        </div>
-        <button class="icon-btn" id="logoutBtn" title="Logout">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
+        <div class="my-avatar-sb" onclick="openProfileModal()" id="myAvatarSb"></div>
+        <span class="sb-username" id="myNameLabel"></span>
+        <button class="icon-btn" id="logoutBtn">🚪</button>
       </div>
-      <div class="search-wrap"><input type="text" id="searchInput" placeholder="Search users" oninput="filterUsers()"></div>
+      <div class="search-wrap">
+        <input type="text" placeholder="بحث عن أشخاص..." id="searchInput" oninput="filterUsers()">
+      </div>
       <div class="users-list" id="usersList"></div>
     </div>
 
-    <div class="chat-area" id="chatArea">
-      <div class="empty-chat" id="emptyChat" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text2);">
-        <p>Select someone to chat with</p>
-      </div>
-      <div id="chatView" style="display:none; flex-direction:column; flex:1; min-height:0;">
+    <div class="chat-area hidden" id="chatArea">
+      <div id="chatView" style="display:none; flex-direction:column; height:100%;">
         <div class="chat-header">
-          <button class="icon-btn" id="backBtn" style="display:none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <div class="avatar" id="chatAvatar" style="width:38px; height:38px; background:#262626; color:#0095f6; display:flex; align-items:center; justify-content:center; font-weight:bold; border-radius:50%;"></div>
+          <button class="icon-btn" id="backBtn">➡️</button>
+          <div class="avatar" id="chatAvatar"></div>
           <div>
-            <div id="chatName" style="font-weight:600; font-size:14px; color:var(--text);"></div>
-            <div style="font-size:11px; color:var(--text2);">Active now</div>
+            <div id="chatName" style="font-weight:600; font-size:15px;"></div>
+            <div style="font-size:11px; color:#4cd964;">نشط الآن</div>
           </div>
         </div>
         <div class="messages" id="messages"></div>
-
-        <!-- Image preview before send -->
-        <div class="img-msg-preview" id="imgMsgPreview">
-          <img id="imgMsgThumb" src="">
-          <span id="imgMsgName" style="color:var(--text2); font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-          <button class="img-msg-preview-cancel" onclick="cancelImagePreview()">✕</button>
-          <button class="cam-btn primary" style="padding:6px 14px; font-size:13px;" onclick="sendImageMsg()">Send</button>
-        </div>
-
-        <!-- Recording bar -->
-        <div class="recording-bar" id="recordingBar">
-          <div class="rec-dot"></div>
-          <span class="rec-time" id="recTime">0:00</span>
-          <button class="rec-cancel" onclick="cancelRecording()">Cancel</button>
-          <button class="rec-send" onclick="stopAndSendVoice()" title="Send">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-          </button>
-        </div>
-
-        <!-- Emoji Picker -->
-        <div class="emoji-picker" id="emojiPicker">
-          <div class="emoji-categories" id="emojiCats"></div>
-          <input class="emoji-search" type="text" placeholder="Search emoji…" id="emojiSearch" oninput="searchEmoji()">
-          <div class="emoji-grid" id="emojiGrid"></div>
-        </div>
-
         <div class="input-area">
-          <!-- Emoji button -->
-          <button class="icon-btn" id="emojiToggleBtn" onclick="toggleEmojiPicker()" title="Emoji">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-          </button>
-          <!-- Camera button -->
-          <button class="icon-btn" onclick="openCamera()" title="Camera">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          </button>
-          <!-- Gallery/Image button -->
-          <button class="icon-btn" onclick="document.getElementById('galleryInput').click()" title="Gallery">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          </button>
-          <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="previewGalleryImage(event)">
-
-          <textarea class="msg-input" id="msgInput" placeholder="Message..." rows="1"></textarea>
-
-          <!-- Voice/Send button -->
-          <button class="icon-btn" id="voiceBtn" onclick="startVoiceRecording()" title="Voice message">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          </button>
-          <button class="send-btn" id="sendBtn" style="display:none" onclick="sendMsg()">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="#0095f6"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-          </button>
+          <textarea class="msg-input" id="msgInput" placeholder="رسالة..." rows="1"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMsg()">إرسال</button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- CAMERA MODAL -->
-<div class="modal-overlay" id="cameraOverlay">
-  <div class="camera-modal">
-    <h3>📷 Take a photo</h3>
-    <video id="cameraPreview" autoplay playsinline></video>
-    <canvas id="captureCanvas"></canvas>
-    <div class="camera-controls">
-      <button class="cam-btn secondary" onclick="closeCamera()">Cancel</button>
-      <button class="cam-btn primary" id="captureBtn" onclick="capturePhoto()">📸 Capture</button>
-    </div>
-    <div id="capturedPreviewWrap" style="display:none; flex-direction:column; gap:10px; align-items:center;">
-      <img id="capturedPreview" style="width:100%; border-radius:10px;">
-      <div style="display:flex; gap:8px; width:100%;">
-        <button class="cam-btn secondary" style="flex:1;" onclick="retakePhoto()">Retake</button>
-        <button class="cam-btn primary" style="flex:1;" onclick="sendCapturedPhoto()">Send 📤</button>
+      <div id="emptyChat" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text2);">
+        اختر شخصاً لبدء الدردشة
       </div>
     </div>
-  </div>
-</div>
-
-<!-- PROFILE MODAL -->
-<div class="modal-overlay" id="profileOverlay">
-  <div class="profile-modal">
-    <h3>Edit Profile</h3>
-    <div class="profile-avatar-wrap">
-      <div class="profile-avatar-circle" id="profileAvatarCircle">
-        <span id="profileAvatarInitial"></span>
-        <img id="profileAvatarImg" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%;">
-        <input type="file" accept="image/*" id="profileAvatarInput" onchange="previewProfileAvatar(event)">
-      </div>
-      <span class="profile-change-photo" onclick="document.getElementById('profileAvatarInput').click()">Change photo</span>
-    </div>
-    <input type="text" id="profileNameInput" placeholder="Your name" maxlength="20">
-    <input type="text" id="profileBioInput" placeholder="Bio (optional)" maxlength="80">
-    <button class="profile-save-btn" onclick="saveProfile()">Save changes</button>
-    <button class="profile-cancel-btn" onclick="closeProfileModal()">Cancel</button>
   </div>
 </div>
 
@@ -272,6 +131,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+  // إعدادات Firebase (استخدم إعداداتك الخاصة هنا)
   const firebaseConfig = {
     apiKey: "AIzaSyCGESu1mlPYGthb3ibL6PdD5HpgdjaleF8",
     authDomain: "myloves-ce43d.firebaseapp.com",
@@ -284,108 +144,33 @@
   const firebaseApp = initializeApp(firebaseConfig);
   const db = getFirestore(firebaseApp);
 
-  let myName = '', myId = '', myAvatar = '', myBio = '';
-  let activeUserId = null, activeUserName = '';
+  let myName = '', myId = '', myAvatar = '';
+  let activeUserId = null;
   let unsubMessages = null;
   let allUsers = [];
-  let cameraStream = null;
-  let capturedImageData = null;
-  let pendingImageData = null;
-  let mediaRecorder = null;
-  let audioChunks = [];
-  let recInterval = null;
-  let recSeconds = 0;
+  let unreadCounts = {}; // لتخزين عدد الرسائل غير المقروءة لكل مستخدم
 
-  // ===================== EMOJI DATA =====================
-  const emojiData = {
-    '😀': ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','☺️','😙','🥲','😚','🤩','🥳','😏','😌','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','😶‍🌫️','😒','🙄','😬','😮‍💨','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤧','🥵','🥶','🥴','😵','😵‍💫','🤯','🤠','🥸','😎','🧐','🤓'],
-    '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✌️','🤞','🫰','🤟','🤘','👍','👎','👊','✊','🤛','🤜','🙌','👏','🤲','🫶','👐','🤝','🫱','🫲','🫳','🫴'],
-    '🐶': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🦣','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈','🐈‍⬛','🪶','🐓','🦃','🦤','🦚','🦜','🦢','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔'],
-    '🍎': ['🍎','🍊','🍋','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🥕','🧄','🧅','🥔','🍠','🫘','🌽','🍞','🥐','🥖','🫓','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌭','🍔','🍟','🍕','🫔','🌮','🌯','🥙','🧆','🥚','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🧁','🎂','🍰','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🧃','🥤','🧋','☕','🍵','🫖','🍺','🥂','🍾'],
-    '⚽': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🥍','🏑','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🏇','🧘','🏄','🚵','🚴','🏊','🤽','🚣','🧗','🏌️','🧜','🪄'],
-    '🚗': ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🛺','🚲','🛴','🚏','🛣️','🛤️','⛽','🛞','🚨','🚥','🚦','✈️','🛫','🛬','🛩️','💺','🛸','🚀','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','🚂','🚃','🚄','🚅','🚆','🚇','🚈','🚉','🚊','🚝','🚞','🚋','🚌','🚍','🚎','🚐','🚑','🚒','🚓','🚔','🚕','🚖','🚗','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏧','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','💒','🗼','🗽','⛪','🕌','🛕','⛩️','🕍'],
-    '🌟': ['🌟','⭐','✨','💫','⚡','🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','🌬️','💨','💧','💦','🌊','🔥','🌋','🌍','🌎','🌏','🌐','🗺️','🧭','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌙','🌚','🌛','🌜','🌝','🌞','🪐','🌠','🌌','⛄','🎆','🎇','🎑']
-  };
-
-  // ===================== INIT =====================
-  window.addEventListener('DOMContentLoaded', async () => {
-    buildEmojiPicker();
-    const savedId = localStorage.getItem('chat_myId');
-    const savedName = localStorage.getItem('chat_myName');
-    const savedAvatar = localStorage.getItem('chat_myAvatar') || '';
-    const savedBio = localStorage.getItem('chat_myBio') || '';
-    if (savedId && savedName) {
-      myId = savedId; myName = savedName; myAvatar = savedAvatar; myBio = savedBio;
-      await updateOnlineStatus(true);
-      showApp();
-    }
-
-    document.getElementById('loginAvatarInput').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        document.getElementById('loginAvatarPreview').src = ev.target.result;
-        document.getElementById('loginAvatarPreview').style.display = 'block';
-        document.getElementById('loginAvatarIcon').style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    });
-
-    document.getElementById('msgInput').addEventListener('input', function() {
-      const hasText = !!this.value.trim();
-      document.getElementById('sendBtn').style.display = hasText ? 'block' : 'none';
-      document.getElementById('voiceBtn').style.display = hasText ? 'none' : 'block';
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 80) + 'px';
-    });
-
-    document.getElementById('msgInput').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      localStorage.clear();
-      updateOnlineStatus(false).then(() => location.reload());
-    });
-
-    document.getElementById('backBtn').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.remove('hidden');
-      document.getElementById('chatArea').classList.add('hidden');
-    });
-
-    document.addEventListener('click', e => {
-      const picker = document.getElementById('emojiPicker');
-      const btn = document.getElementById('emojiToggleBtn');
-      if (!picker.contains(e.target) && !btn.contains(e.target)) {
-        picker.classList.remove('open');
-      }
-    });
-
-    window.onbeforeunload = () => updateOnlineStatus(false);
-  });
-
-  // ===================== AUTH =====================
-  async function login() {
+  // --- تفعيل الدخول ---
+  document.getElementById('loginBtn').onclick = async () => {
     const name = document.getElementById('nameInput').value.trim();
-    if (!name) { document.getElementById('loginError').style.display = 'block'; return; }
+    if (!name) return alert("يرجى إدخال الاسم");
+    
+    myId = name.toLowerCase().replace(/\s/g, '_') + '_' + Math.floor(Math.random()*1000);
     myName = name;
-    myId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).slice(2, 6);
-    const avatarPreview = document.getElementById('loginAvatarPreview');
-    myAvatar = avatarPreview.style.display !== 'none' ? avatarPreview.src : '';
+    myAvatar = document.getElementById('loginAvatarPreview').src || '';
+    
     localStorage.setItem('chat_myId', myId);
     localStorage.setItem('chat_myName', myName);
     localStorage.setItem('chat_myAvatar', myAvatar);
-    localStorage.setItem('chat_myBio', '');
-    await updateOnlineStatus(true);
+    
+    await updateStatus(true);
     showApp();
-  }
+  };
 
-  async function updateOnlineStatus(status) {
+  async function updateStatus(online) {
     if (!myId) return;
     await setDoc(doc(db, 'users', myId), {
-      name: myName, id: myId, online: status,
-      avatar: myAvatar, bio: myBio, lastSeen: serverTimestamp()
+      name: myName, id: myId, avatar: myAvatar, online: online, lastSeen: serverTimestamp()
     }, { merge: true });
   }
 
@@ -393,79 +178,111 @@
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('myNameLabel').textContent = myName;
-    updateMySidebarAvatar();
-    if (window.innerWidth <= 640) document.getElementById('chatArea').classList.add('hidden');
+    if (myAvatar) document.getElementById('myAvatarSb').innerHTML = `<img src="${myAvatar}">`;
     startListeningUsers();
+    startGlobalListener(); // تفعيل مراقب الرسائل للإشعارات
   }
 
-  function updateMySidebarAvatar() {
-    const el = document.getElementById('myAvatarSb');
-    if (myAvatar) {
-      el.innerHTML = `<img src="${myAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    } else {
-      el.textContent = myName[0]?.toUpperCase() || '?';
-    }
-  }
-
-  // ===================== USERS =====================
+  // --- مراقب المستخدمين وقائمة الشات ---
   function startListeningUsers() {
     onSnapshot(collection(db, 'users'), snap => {
       allUsers = [];
       snap.forEach(d => { if (d.id !== myId) allUsers.push(d.data()); });
-      renderUsers(allUsers);
+      renderUsers();
     });
   }
 
-  function renderUsers(users) {
+  function renderUsers() {
     const list = document.getElementById('usersList');
     list.innerHTML = '';
-    users.forEach(u => {
+    allUsers.forEach(u => {
+      const isUnread = unreadCounts[u.id] > 0;
       const item = document.createElement('div');
-      item.className = 'user-item' + (activeUserId === u.id ? ' active' : '');
-      const avatarHtml = u.avatar
-        ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-        : `<span style="font-weight:bold;color:#0095f6;font-size:18px;">${u.name[0].toUpperCase()}</span>`;
+      item.className = `user-item ${activeUserId === u.id ? 'active' : ''}`;
       item.innerHTML = `
-        <div class="avatar" style="background:#262626;">
-          ${avatarHtml}
+        <div class="avatar">
+          ${u.avatar ? `<img src="${u.avatar}">` : `<span>${u.name[0]}</span>`}
           ${u.online ? '<div class="online-ring"></div>' : ''}
         </div>
-        <div style="flex:1; overflow:hidden;">
-          <div style="font-size:13px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.name}</div>
-          <div style="font-size:12px; color:#a8a8a8;">${u.bio ? u.bio : (u.online ? 'Active now' : 'Offline')}</div>
+        <div style="flex:1">
+          <div style="color:var(--text); font-size:14px; font-weight:${isUnread?'700':'400'}">${u.name}</div>
+          <div style="color:var(--text2); font-size:12px">${u.online ? 'نشط الآن' : 'غير متصل'}</div>
         </div>
+        ${isUnread ? `<div class="unread-badge">${unreadCounts[u.id]}</div>` : ''}
       `;
-      item.onclick = () => openChat(u.id, u.name, u.avatar || '');
+      item.onclick = () => {
+        unreadCounts[u.id] = 0; // تصفير العداد عند الفتح
+        openChat(u);
+        renderUsers();
+      };
       list.appendChild(item);
     });
   }
 
-  window.filterUsers = function() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    renderUsers(allUsers.filter(u => u.name.toLowerCase().includes(q)));
-  };
+  // --- ميزة الإشعارات والعداد (نفس إنستغرام) ---
+  function startGlobalListener() {
+    // نراقب كل المحادثات التي يكون المستخدم طرفاً فيها
+    allUsers.forEach(user => {
+      const chatId = [myId, user.id].sort().join('__');
+      const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'desc'));
+      
+      // استماع لآخر رسالة فقط
+      onSnapshot(q, snap => {
+        if (snap.empty) return;
+        const lastMsg = snap.docs[0].data();
+        
+        // إذا كانت الرسالة من الطرف الآخر وليست مني، والوقت حديث جداً
+        if (lastMsg.senderId !== myId && lastMsg.timestamp) {
+            const msgTime = lastMsg.timestamp.toDate().getTime();
+            if (Date.now() - msgTime < 3000 && activeUserId !== user.id) {
+                unreadCounts[user.id] = (unreadCounts[user.id] || 0) + 1;
+                showNotification(user.name, lastMsg.text);
+                renderUsers();
+                playNotifSound();
+            }
+        }
+      });
+    });
+  }
 
-  // ===================== CHAT =====================
-  function openChat(id, name, avatar) {
-    activeUserId = id; activeUserName = name;
+  function showNotification(sender, text) {
+    const toast = document.createElement('div');
+    toast.className = 'push-notif';
+    toast.innerHTML = `
+      <div style="font-size:13px">
+        <b style="color:var(--online)">${sender}</b><br>
+        <span style="color:var(--text)">${text.substring(0,30)}...</span>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+    toast.onclick = () => {
+        const user = allUsers.find(u => u.name === sender);
+        if(user) openChat(user);
+        toast.remove();
+    };
+  }
+
+  function playNotifSound() {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
+    audio.play().catch(()=>{});
+  }
+
+  // --- إدارة الدردشة ---
+  async function openChat(user) {
+    activeUserId = user.id;
     document.getElementById('emptyChat').style.display = 'none';
     document.getElementById('chatView').style.display = 'flex';
-    document.getElementById('chatName').textContent = name;
-    const chatAv = document.getElementById('chatAvatar');
-    if (avatar) {
-      chatAv.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-    } else {
-      chatAv.textContent = name[0].toUpperCase();
-      chatAv.style.cssText = "background:#262626;color:#0095f6;display:flex;align-items:center;justify-content:center;font-weight:bold;border-radius:50%;";
-    }
-    if (window.innerWidth <= 640) {
-      document.getElementById('sidebar').classList.add('hidden');
-      document.getElementById('chatArea').classList.remove('hidden');
-      document.getElementById('backBtn').style.display = 'block';
-    }
+    document.getElementById('chatArea').classList.remove('hidden');
+    if(window.innerWidth < 640) document.getElementById('sidebar').classList.add('hidden');
+    
+    document.getElementById('chatName').textContent = user.name;
+    document.getElementById('chatAvatar').innerHTML = user.avatar ? `<img src="${user.avatar}" style="width:100%; border-radius:50%">` : user.name[0];
+    
     if (unsubMessages) unsubMessages();
-    const chatId = [myId, id].sort().join('__');
+    const chatId = [myId, activeUserId].sort().join('__');
     const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp'));
+    
     unsubMessages = onSnapshot(q, snap => {
       const box = document.getElementById('messages');
       box.innerHTML = '';
@@ -473,298 +290,49 @@
         const m = d.data();
         const row = document.createElement('div');
         row.className = 'msg-row ' + (m.senderId === myId ? 'me' : 'them');
-        const side = m.senderId === myId ? 'me' : 'them';
-        if (m.type === 'image') {
-          row.innerHTML = `<div class="bubble img-bubble ${side}"><img src="${m.url}" alt="photo" onclick="this.requestFullscreen&&this.requestFullscreen()"></div>`;
-        } else if (m.type === 'voice') {
-          row.innerHTML = buildVoiceBubble(m, side);
-          setupVoicePlayer(row, m);
-        } else {
-          row.innerHTML = `<div class="bubble ${side}">${escapeHtml(m.text)}</div>`;
-        }
+        row.innerHTML = `<div class="bubble ${m.senderId === myId ? 'me' : 'them'}">${m.text}</div>`;
         box.appendChild(row);
       });
       box.scrollTop = box.scrollHeight;
     });
   }
 
-  async function sendMsg() {
+  window.sendMsg = async function() {
     const inp = document.getElementById('msgInput');
     const text = inp.value.trim();
     if (!text || !activeUserId) return;
-    inp.value = ''; inp.style.height = 'auto';
+    
+    const chatId = [myId, activeUserId].sort().join('__');
+    inp.value = '';
     document.getElementById('sendBtn').style.display = 'none';
-    document.getElementById('voiceBtn').style.display = 'block';
-    const chatId = [myId, activeUserId].sort().join('__');
+    
     await addDoc(collection(db, 'chats', chatId, 'messages'), {
-      text, type: 'text', senderId: myId, timestamp: serverTimestamp()
+      text, senderId: myId, timestamp: serverTimestamp()
     });
   }
 
-  // ===================== IMAGE SEND =====================
-  window.previewGalleryImage = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  // إظهار زر الإرسال عند الكتابة
+  document.getElementById('msgInput').oninput = function() {
+    document.getElementById('sendBtn').style.display = this.value.trim() ? 'block' : 'none';
+  };
+
+  document.getElementById('backBtn').onclick = () => {
+    document.getElementById('chatArea').classList.add('hidden');
+    document.getElementById('sidebar').classList.remove('hidden');
+    activeUserId = null;
+  };
+
+  // رفع الصورة في تسجيل الدخول
+  document.getElementById('loginAvatarInput').onchange = (e) => {
     const reader = new FileReader();
-    reader.onload = ev => {
-      pendingImageData = ev.target.result;
-      document.getElementById('imgMsgThumb').src = pendingImageData;
-      document.getElementById('imgMsgName').textContent = file.name;
-      document.getElementById('imgMsgPreview').classList.add('active');
+    reader.onload = (ev) => {
+      document.getElementById('loginAvatarPreview').src = ev.target.result;
+      document.getElementById('loginAvatarPreview').style.display = 'block';
+      document.getElementById('loginAvatarIcon').style.display = 'none';
     };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    reader.readAsDataURL(e.target.files[0]);
   };
 
-  window.cancelImagePreview = function() {
-    pendingImageData = null;
-    document.getElementById('imgMsgPreview').classList.remove('active');
-  };
-
-  window.sendImageMsg = async function() {
-    if (!pendingImageData || !activeUserId) return;
-    const data = pendingImageData;
-    pendingImageData = null;
-    document.getElementById('imgMsgPreview').classList.remove('active');
-    const chatId = [myId, activeUserId].sort().join('__');
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
-      type: 'image', url: data, senderId: myId, timestamp: serverTimestamp()
-    });
-  };
-
-  // ===================== CAMERA =====================
-  window.openCamera = async function() {
-    if (!activeUserId) return;
-    document.getElementById('cameraOverlay').classList.add('open');
-    document.getElementById('capturedPreviewWrap').style.display = 'none';
-    document.getElementById('cameraPreview').style.display = 'block';
-    document.getElementById('captureBtn').style.display = 'block';
-    try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-      document.getElementById('cameraPreview').srcObject = cameraStream;
-    } catch { alert('Cannot access camera'); closeCamera(); }
-  };
-
-  window.closeCamera = function() {
-    document.getElementById('cameraOverlay').classList.remove('open');
-    if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
-    capturedImageData = null;
-  };
-
-  window.capturePhoto = function() {
-    const video = document.getElementById('cameraPreview');
-    const canvas = document.getElementById('captureCanvas');
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    capturedImageData = canvas.toDataURL('image/jpeg', 0.85);
-    document.getElementById('cameraPreview').style.display = 'none';
-    document.getElementById('captureBtn').style.display = 'none';
-    document.getElementById('capturedPreview').src = capturedImageData;
-    document.getElementById('capturedPreviewWrap').style.display = 'flex';
-    if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
-  };
-
-  window.retakePhoto = async function() {
-    document.getElementById('capturedPreviewWrap').style.display = 'none';
-    document.getElementById('cameraPreview').style.display = 'block';
-    document.getElementById('captureBtn').style.display = 'block';
-    capturedImageData = null;
-    try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-      document.getElementById('cameraPreview').srcObject = cameraStream;
-    } catch { alert('Cannot access camera'); closeCamera(); }
-  };
-
-  window.sendCapturedPhoto = async function() {
-    if (!capturedImageData || !activeUserId) return;
-    const data = capturedImageData;
-    capturedImageData = null;
-    closeCamera();
-    const chatId = [myId, activeUserId].sort().join('__');
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
-      type: 'image', url: data, senderId: myId, timestamp: serverTimestamp()
-    });
-  };
-
-  // ===================== VOICE =====================
-  window.startVoiceRecording = async function() {
-    if (!activeUserId) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-      mediaRecorder.start();
-      recSeconds = 0;
-      document.getElementById('recTime').textContent = '0:00';
-      document.getElementById('recordingBar').classList.add('active');
-      recInterval = setInterval(() => {
-        recSeconds++;
-        const m = Math.floor(recSeconds / 60), s = recSeconds % 60;
-        document.getElementById('recTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-        if (recSeconds >= 120) stopAndSendVoice();
-      }, 1000);
-    } catch { alert('Cannot access microphone'); }
-  };
-
-  window.cancelRecording = function() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-    clearInterval(recInterval);
-    document.getElementById('recordingBar').classList.remove('active');
-    audioChunks = [];
-  };
-
-  window.stopAndSendVoice = function() {
-    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-    mediaRecorder.onstop = async () => {
-      clearInterval(recInterval);
-      document.getElementById('recordingBar').classList.remove('active');
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      const reader = new FileReader();
-      reader.onload = async ev => {
-        const chatId = [myId, activeUserId].sort().join('__');
-        await addDoc(collection(db, 'chats', chatId, 'messages'), {
-          type: 'voice', url: ev.target.result, duration: recSeconds,
-          senderId: myId, timestamp: serverTimestamp()
-        });
-      };
-      reader.readAsDataURL(blob);
-      audioChunks = [];
-    };
-    mediaRecorder.stop();
-  };
-
-  function buildVoiceBubble(m, side) {
-    const dur = m.duration || 0;
-    const bars = Array.from({length: 20}, (_, i) => {
-      const h = 6 + Math.sin(i * 0.8) * 8 + Math.random() * 6;
-      return `<div class="voice-bar" style="height:${h}px"></div>`;
-    }).join('');
-    const mm = Math.floor(dur/60), ss = dur % 60;
-    return `
-      <div class="bubble voice-bubble ${side}">
-        <button class="voice-play-btn" data-url="${m.url}">▶</button>
-        <div class="voice-wave">${bars}</div>
-        <span class="voice-duration">${mm}:${ss.toString().padStart(2,'0')}</span>
-      </div>`;
-  }
-
-  function setupVoicePlayer(row, m) {
-    const btn = row.querySelector('.voice-play-btn');
-    let audio = null;
-    btn.addEventListener('click', () => {
-      if (audio && !audio.paused) { audio.pause(); btn.textContent = '▶'; return; }
-      if (!audio) { audio = new Audio(m.url); audio.onended = () => { btn.textContent = '▶'; }; }
-      audio.play(); btn.textContent = '⏸';
-    });
-  }
-
-  // ===================== EMOJI PICKER =====================
-  function buildEmojiPicker() {
-    const catsEl = document.getElementById('emojiCats');
-    const gridEl = document.getElementById('emojiGrid');
-    const catKeys = Object.keys(emojiData);
-    catKeys.forEach((k, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'emoji-cat-btn' + (i === 0 ? ' active' : '');
-      btn.textContent = k;
-      btn.onclick = () => {
-        document.querySelectorAll('.emoji-cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderEmojiGrid(emojiData[k]);
-      };
-      catsEl.appendChild(btn);
-    });
-    renderEmojiGrid(emojiData[catKeys[0]]);
-  }
-
-  function renderEmojiGrid(emojis) {
-    const grid = document.getElementById('emojiGrid');
-    grid.innerHTML = '';
-    emojis.forEach(em => {
-      const btn = document.createElement('button');
-      btn.className = 'emoji-btn';
-      btn.textContent = em;
-      btn.onclick = () => insertEmoji(em);
-      grid.appendChild(btn);
-    });
-  }
-
-  window.searchEmoji = function() {
-    const q = document.getElementById('emojiSearch').value.toLowerCase();
-    if (!q) { renderEmojiGrid(emojiData[Object.keys(emojiData)[0]]); return; }
-    const all = Object.values(emojiData).flat();
-    renderEmojiGrid(all.filter(e => e.includes(q)));
-  };
-
-  window.toggleEmojiPicker = function() {
-    document.getElementById('emojiPicker').classList.toggle('open');
-  };
-
-  function insertEmoji(em) {
-    const inp = document.getElementById('msgInput');
-    const start = inp.selectionStart, end = inp.selectionEnd;
-    inp.value = inp.value.slice(0, start) + em + inp.value.slice(end);
-    inp.selectionStart = inp.selectionEnd = start + em.length;
-    inp.focus();
-    const hasText = !!inp.value.trim();
-    document.getElementById('sendBtn').style.display = hasText ? 'block' : 'none';
-    document.getElementById('voiceBtn').style.display = hasText ? 'none' : 'block';
-  }
-
-  // ===================== PROFILE =====================
-  window.openProfileModal = function() {
-    document.getElementById('profileNameInput').value = myName;
-    document.getElementById('profileBioInput').value = myBio;
-    const initial = document.getElementById('profileAvatarInitial');
-    const img = document.getElementById('profileAvatarImg');
-    if (myAvatar) {
-      img.src = myAvatar; img.style.display = 'block'; initial.style.display = 'none';
-    } else {
-      img.style.display = 'none'; initial.textContent = myName[0]?.toUpperCase(); initial.style.display = 'block';
-    }
-    document.getElementById('profileOverlay').classList.add('open');
-  };
-
-  window.closeProfileModal = function() {
-    document.getElementById('profileOverlay').classList.remove('open');
-  };
-
-  window.previewProfileAvatar = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('profileAvatarImg').src = ev.target.result;
-      document.getElementById('profileAvatarImg').style.display = 'block';
-      document.getElementById('profileAvatarInitial').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  };
-
-  window.saveProfile = async function() {
-    const newName = document.getElementById('profileNameInput').value.trim();
-    if (!newName) return;
-    const imgEl = document.getElementById('profileAvatarImg');
-    const newAvatar = imgEl.style.display !== 'none' ? imgEl.src : '';
-    const newBio = document.getElementById('profileBioInput').value.trim();
-    myName = newName; myAvatar = newAvatar; myBio = newBio;
-    localStorage.setItem('chat_myName', myName);
-    localStorage.setItem('chat_myAvatar', myAvatar);
-    localStorage.setItem('chat_myBio', myBio);
-    document.getElementById('myNameLabel').textContent = myName;
-    updateMySidebarAvatar();
-    await updateOnlineStatus(true);
-    closeProfileModal();
-  };
-
-  function escapeHtml(t) {
-    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  // Expose login
-  document.getElementById('loginBtn').addEventListener('click', login);
-  window.login = login;
 </script>
 </body>
 </html>
