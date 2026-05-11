@@ -117,9 +117,27 @@
     .img-msg-preview img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
     .img-msg-preview-cancel { background: none; border: none; color: var(--text2); cursor: pointer; margin-left: auto; }
 
+    /* CALL MODAL */
+    .call-modal { background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 20px; width: 340px; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.08); overflow: hidden; position: relative; }
+    .call-big-avatar { width: 86px; height: 86px; border-radius: 50%; background: #0095f6; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; color: #fff; overflow: hidden; border: 3px solid rgba(255,255,255,.2); }
+    .call-big-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .call-action-btn { width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform .15s; }
+    .call-action-btn:active { transform: scale(.92); }
+    .call-action-btn.decline { background: #ff4444; transform: rotate(135deg); }
+    .call-action-btn.decline:active { transform: rotate(135deg) scale(.92); }
+    .call-action-btn.accept { background: #4caf50; }
+    .call-ctrl-btn { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,.15); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, transform .15s; }
+    .call-ctrl-btn:hover { background: rgba(255,255,255,.25); }
+    .call-ctrl-btn:active { transform: scale(.9); }
+    .call-ctrl-btn.end { background: #ff4444; width: 62px; height: 62px; }
+    .call-ctrl-btn.muted, .call-ctrl-btn.cam-off { background: rgba(255,255,255,.35); }
+    @keyframes pulse-ring { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(1.5);opacity:0} }
+    .call-pulse { position: absolute; width: 86px; height: 86px; border-radius: 50%; background: rgba(0,149,246,.3); animation: pulse-ring 1.6s ease-out infinite; }
+
     @media(max-width:640px) {
       .sidebar.hidden, .chat-area.hidden { display: none; }
       .emoji-picker { width: calc(100vw - 24px); }
+      .call-modal { width: 100vw; min-height: 100dvh; border-radius: 0; }
     }
   </style>
 </head>
@@ -167,10 +185,17 @@
         <div class="chat-header">
           <button class="icon-btn" id="backBtn" style="display:none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
           <div class="avatar" id="chatAvatar" style="width:38px; height:38px; background:#262626; color:#0095f6; display:flex; align-items:center; justify-content:center; font-weight:bold; border-radius:50%;"></div>
-          <div>
+          <div style="flex:1;">
             <div id="chatName" style="font-weight:600; font-size:14px; color:var(--text);"></div>
             <div style="font-size:11px; color:var(--text2);">Active now</div>
           </div>
+          <!-- Call buttons -->
+          <button class="icon-btn" id="voiceCallBtn" onclick="startCall('audio')" title="Voice Call">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15z"/></svg>
+          </button>
+          <button class="icon-btn" id="videoCallBtn" onclick="startCall('video')" title="Video Call">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </button>
         </div>
         <div class="messages" id="messages"></div>
 
@@ -249,6 +274,58 @@
   </div>
 </div>
 
+<!-- CALL MODAL -->
+<div class="modal-overlay" id="callOverlay">
+  <div class="call-modal" id="callModal">
+    <!-- Incoming call screen -->
+    <div id="incomingCallScreen" style="display:none; flex-direction:column; align-items:center; gap:20px;">
+      <div id="incomingCallerAvatar" class="call-big-avatar"></div>
+      <div id="incomingCallerName" style="color:#fff; font-size:20px; font-weight:600;"></div>
+      <div style="color:rgba(255,255,255,.7); font-size:14px;" id="incomingCallType">Incoming voice call…</div>
+      <div style="display:flex; gap:32px; margin-top:20px;">
+        <button class="call-action-btn decline" onclick="declineCall()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15z"/></svg>
+        </button>
+        <button class="call-action-btn accept" onclick="acceptCall()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15z"/></svg>
+        </button>
+      </div>
+      <div style="color:rgba(255,255,255,.5); font-size:12px; margin-top:-8px;">
+        <span style="color:#ff5555;">✕ Decline</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4caf50;">✓ Accept</span>
+      </div>
+    </div>
+    <!-- Outgoing / active call screen -->
+    <div id="activeCallScreen" style="display:none; flex-direction:column; align-items:center; gap:0; width:100%; height:100%; position:relative;">
+      <!-- Video area -->
+      <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; border-radius:16px; background:#111; display:none;"></video>
+      <!-- Audio-only or overlay -->
+      <div id="callAvatarOverlay" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+        <div id="activeCallerAvatar" class="call-big-avatar" style="width:100px; height:100px; font-size:38px;"></div>
+        <div id="activeCallerName" style="color:#fff; font-size:20px; font-weight:700;"></div>
+        <div id="callStatus" style="color:rgba(255,255,255,.65); font-size:14px;">Calling…</div>
+        <div id="callTimer" style="color:rgba(255,255,255,.8); font-size:15px; font-weight:600; display:none;">0:00</div>
+      </div>
+      <!-- My small video (PiP) -->
+      <video id="localVideo" autoplay playsinline muted style="position:absolute; top:12px; right:12px; width:90px; height:130px; border-radius:12px; object-fit:cover; background:#222; border:2px solid #333; display:none;"></video>
+      <!-- Controls bar -->
+      <div id="callControls" style="position:absolute; bottom:0; left:0; right:0; padding:20px 0 30px; display:flex; justify-content:center; gap:20px; background:linear-gradient(transparent,rgba(0,0,0,.7)); border-radius:0 0 16px 16px;">
+        <button class="call-ctrl-btn" id="muteMicBtn" onclick="toggleMic()" title="Mute">
+          <svg id="micIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <button class="call-ctrl-btn end" onclick="endCall()" title="End">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15z"/></svg>
+        </button>
+        <button class="call-ctrl-btn" id="toggleCamBtn" onclick="toggleCamera()" title="Camera" style="display:none;">
+          <svg id="camIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </button>
+        <button class="call-ctrl-btn" id="speakerBtn" onclick="toggleSpeaker()" title="Speaker">
+          <svg id="speakerIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profileOverlay">
   <div class="profile-modal">
@@ -270,7 +347,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, query, orderBy, serverTimestamp, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCGESu1mlPYGthb3ibL6PdD5HpgdjaleF8",
@@ -295,6 +372,19 @@
   let audioChunks = [];
   let recInterval = null;
   let recSeconds = 0;
+
+  // ===================== CALL STATE =====================
+  let callType = null; // 'audio' | 'video'
+  let callRole = null; // 'caller' | 'callee'
+  let callRoomId = null;
+  let localStream = null;
+  let peerConnection = null;
+  let unsubCall = null;
+  let callTimerInterval = null;
+  let callSeconds = 0;
+  let micMuted = false;
+  let camOff = false;
+  const ICE_SERVERS = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302'] }] };
 
   // ===================== EMOJI DATA =====================
   const emojiData = {
@@ -396,6 +486,7 @@
     updateMySidebarAvatar();
     if (window.innerWidth <= 640) document.getElementById('chatArea').classList.add('hidden');
     startListeningUsers();
+    listenForIncomingCalls();
   }
 
   function updateMySidebarAvatar() {
@@ -658,6 +749,251 @@
       audio.play(); btn.textContent = '⏸';
     });
   }
+
+  // ===================== WEBRTC CALLS =====================
+
+  function getCallRoomId(a, b) { return [a, b].sort().join('__call__'); }
+
+  function renderCallAvatar(el, avatar, name) {
+    if (avatar) {
+      el.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      el.textContent = name[0]?.toUpperCase() || '?';
+    }
+  }
+
+  window.startCall = async function(type) {
+    if (!activeUserId) return;
+    callType = type;
+    callRole = 'caller';
+    callRoomId = getCallRoomId(myId, activeUserId);
+
+    // Get local media
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia(
+        type === 'video' ? { video: true, audio: true } : { audio: true }
+      );
+    } catch(e) { alert('Cannot access microphone/camera'); return; }
+
+    showActiveCallScreen(activeUserName, activeUserId);
+
+    // Create peer connection
+    peerConnection = new RTCPeerConnection(ICE_SERVERS);
+    localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+    if (type === 'video') {
+      document.getElementById('localVideo').srcObject = localStream;
+      document.getElementById('localVideo').style.display = 'block';
+      document.getElementById('toggleCamBtn').style.display = 'flex';
+    }
+
+    peerConnection.ontrack = e => {
+      const remoteVideo = document.getElementById('remoteVideo');
+      remoteVideo.srcObject = e.streams[0];
+      if (type === 'video') {
+        remoteVideo.style.display = 'block';
+        document.getElementById('callAvatarOverlay').style.background = 'transparent';
+      }
+    };
+
+    peerConnection.onicecandidate = async e => {
+      if (e.candidate) {
+        await addDoc(collection(db, 'calls', callRoomId, 'callerCandidates'), e.candidate.toJSON());
+      }
+    };
+
+    // Write offer to Firestore
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    const callDoc = { offer: { type: offer.type, sdp: offer.sdp }, callType: type, callerId: myId, callerName: myName, callerAvatar: myAvatar, calleeId: activeUserId, status: 'ringing', createdAt: serverTimestamp() };
+    await setDoc(doc(db, 'calls', callRoomId), callDoc);
+
+    // Listen for answer
+    unsubCall = onSnapshot(doc(db, 'calls', callRoomId), async snap => {
+      const data = snap.data();
+      if (!data) return;
+      if (data.answer && peerConnection.signalingState !== 'stable') {
+        const answerDesc = new RTCSessionDescription(data.answer);
+        await peerConnection.setRemoteDescription(answerDesc);
+        document.getElementById('callStatus').textContent = 'Connected';
+        startCallTimer();
+      }
+      if (data.status === 'declined' || data.status === 'ended') {
+        cleanupCall();
+      }
+    });
+
+    // Listen for callee ICE candidates
+    onSnapshot(collection(db, 'calls', callRoomId, 'calleeCandidates'), snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added' && peerConnection) {
+          peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+        }
+      });
+    });
+  };
+
+  // Listen for incoming calls
+  function listenForIncomingCalls() {
+    onSnapshot(collection(db, 'calls'), snap => {
+      snap.docChanges().forEach(async change => {
+        if (change.type !== 'added' && change.type !== 'modified') return;
+        const data = change.doc.data();
+        if (!data || data.calleeId !== myId || data.status !== 'ringing') return;
+        if (peerConnection) return; // already in a call
+        showIncomingCallScreen(data);
+      });
+    });
+  }
+
+  function showIncomingCallScreen(data) {
+    callType = data.callType;
+    callRole = 'callee';
+    callRoomId = getCallRoomId(data.callerId, myId);
+
+    const el = document.getElementById('incomingCallerAvatar');
+    renderCallAvatar(el, data.callerAvatar || '', data.callerName);
+    document.getElementById('incomingCallerName').textContent = data.callerName;
+    document.getElementById('incomingCallType').textContent = callType === 'video' ? '📹 Incoming video call…' : '📞 Incoming voice call…';
+    document.getElementById('callOverlay').classList.add('open');
+    document.getElementById('incomingCallScreen').style.display = 'flex';
+    document.getElementById('activeCallScreen').style.display = 'none';
+  }
+
+  window.acceptCall = async function() {
+    document.getElementById('incomingCallScreen').style.display = 'none';
+
+    // Get caller data
+    const callDoc = await getDoc(doc(db, 'calls', callRoomId));
+    const data = callDoc.data();
+
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia(
+        callType === 'video' ? { video: true, audio: true } : { audio: true }
+      );
+    } catch(e) { alert('Cannot access microphone/camera'); declineCall(); return; }
+
+    showActiveCallScreen(data.callerName, data.callerId, data.callerAvatar);
+
+    peerConnection = new RTCPeerConnection(ICE_SERVERS);
+    localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+    if (callType === 'video') {
+      document.getElementById('localVideo').srcObject = localStream;
+      document.getElementById('localVideo').style.display = 'block';
+      document.getElementById('toggleCamBtn').style.display = 'flex';
+    }
+
+    peerConnection.ontrack = e => {
+      const remoteVideo = document.getElementById('remoteVideo');
+      remoteVideo.srcObject = e.streams[0];
+      if (callType === 'video') {
+        remoteVideo.style.display = 'block';
+        document.getElementById('callAvatarOverlay').style.background = 'transparent';
+      }
+    };
+
+    peerConnection.onicecandidate = async e => {
+      if (e.candidate) {
+        await addDoc(collection(db, 'calls', callRoomId, 'calleeCandidates'), e.candidate.toJSON());
+      }
+    };
+
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    await setDoc(doc(db, 'calls', callRoomId), { answer: { type: answer.type, sdp: answer.sdp }, status: 'active' }, { merge: true });
+
+    // Caller ICE candidates
+    onSnapshot(collection(db, 'calls', callRoomId, 'callerCandidates'), snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added' && peerConnection) {
+          peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+        }
+      });
+    });
+
+    document.getElementById('callStatus').textContent = 'Connected';
+    startCallTimer();
+
+    unsubCall = onSnapshot(doc(db, 'calls', callRoomId), snap => {
+      const d = snap.data();
+      if (d && (d.status === 'declined' || d.status === 'ended')) cleanupCall();
+    });
+  };
+
+  window.declineCall = async function() {
+    if (callRoomId) await setDoc(doc(db, 'calls', callRoomId), { status: 'declined' }, { merge: true });
+    cleanupCall();
+  };
+
+  window.endCall = async function() {
+    if (callRoomId) await setDoc(doc(db, 'calls', callRoomId), { status: 'ended' }, { merge: true });
+    cleanupCall();
+  };
+
+  function cleanupCall() {
+    if (peerConnection) { peerConnection.close(); peerConnection = null; }
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    if (unsubCall) { unsubCall(); unsubCall = null; }
+    if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
+    callRoomId = null; callType = null; callRole = null; callSeconds = 0; micMuted = false; camOff = false;
+    document.getElementById('callOverlay').classList.remove('open');
+    document.getElementById('remoteVideo').srcObject = null;
+    document.getElementById('localVideo').srcObject = null;
+    document.getElementById('localVideo').style.display = 'none';
+    document.getElementById('remoteVideo').style.display = 'none';
+    document.getElementById('callTimer').style.display = 'none';
+    document.getElementById('callAvatarOverlay').style.background = '';
+    document.getElementById('callStatus').textContent = 'Calling…';
+    document.getElementById('toggleCamBtn').style.display = 'none';
+    document.getElementById('muteMicBtn').classList.remove('muted');
+    document.getElementById('toggleCamBtn').classList.remove('cam-off');
+  }
+
+  function showActiveCallScreen(name, id, avatar) {
+    document.getElementById('incomingCallScreen').style.display = 'none';
+    document.getElementById('activeCallScreen').style.display = 'flex';
+    document.getElementById('callOverlay').classList.add('open');
+    const av = document.getElementById('activeCallerAvatar');
+    renderCallAvatar(av, avatar || '', name);
+    document.getElementById('activeCallerName').textContent = name;
+  }
+
+  function startCallTimer() {
+    document.getElementById('callTimer').style.display = 'block';
+    callTimerInterval = setInterval(() => {
+      callSeconds++;
+      const m = Math.floor(callSeconds / 60), s = callSeconds % 60;
+      document.getElementById('callTimer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  window.toggleMic = function() {
+    if (!localStream) return;
+    micMuted = !micMuted;
+    localStream.getAudioTracks().forEach(t => t.enabled = !micMuted);
+    const btn = document.getElementById('muteMicBtn');
+    btn.classList.toggle('muted', micMuted);
+    btn.title = micMuted ? 'Unmute' : 'Mute';
+    btn.innerHTML = micMuted
+      ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/><path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
+      : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+  };
+
+  window.toggleCamera = function() {
+    if (!localStream) return;
+    camOff = !camOff;
+    localStream.getVideoTracks().forEach(t => t.enabled = !camOff);
+    const btn = document.getElementById('toggleCamBtn');
+    btn.classList.toggle('cam-off', camOff);
+  };
+
+  window.toggleSpeaker = function() {
+    // Toggle speaker button visual (actual audio routing via browser default)
+    document.getElementById('speakerBtn').classList.toggle('muted');
+  };
 
   // ===================== EMOJI PICKER =====================
   function buildEmojiPicker() {
