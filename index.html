@@ -13,21 +13,7 @@
       --hover: #1a1a1a; --online: #0095f6;
     }
     body { font-family: -apple-system, sans-serif; background: var(--bg); height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    
-.msg-status {
-    font-size: 11px;
-    color: #8e8e8e; /* رمادي خفيف */
-    margin: 2px 14px 8px 14px; /* مسافة جانبية ليكون تحت الفقاعة */
-    font-weight: 400;
-}
 
-.me + .msg-status {
-    text-align: right; /* محاذاة لليمين لرسائلي */
-}
-
-.them + .msg-status {
-    text-align: left; /* محاذاة لليسار لرسائل الطرف الآخر */
-}
     /* LOGIN */
     .login-screen { width: 100%; max-width: 360px; padding: 40px 32px; display: flex; flex-direction: column; gap: 16px; background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border); }
     .login-screen h2 { font-size: 22px; font-weight: 600; color: var(--text); text-align: center; }
@@ -333,82 +319,6 @@
       await updateOnlineStatus(true);
       showApp();
     }
-
-// 1. دالة حساب الوقت النسبي (نفس الانستجرام)
-function formatRelativeTime(timestamp) {
-    if (!timestamp) return "Just now";
-    const now = new Date();
-    const msgDate = timestamp.toDate();
-    const diffInSeconds = Math.floor((now - msgDate) / 1000);
-
-    if (diffInSeconds < 30) return "Just now";
-    if (diffInSeconds < 60) return diffInSeconds + "s ago";
-    if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + "m ago";
-    if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + "h ago";
-    return msgDate.toLocaleDateString();
-}
-
-// 2. تحديث الرسائل لتصبح Seen عند فتح المحادثة
-async function markAsSeen(chatId, otherId) {
-    const q = query(
-        collection(db, 'chats', chatId, 'messages'), 
-        where("senderId", "==", otherId), 
-        where("seen", "==", false)
-    );
-    const snap = await getDocs(q);
-    snap.forEach(async (d) => {
-        await updateDoc(doc(db, 'chats', chatId, 'messages', d.id), { seen: true });
-    });
-}
-
-// 3. الجزء المطور لعرض الرسائل (داخل unsubMessages)
-unsubMessages = onSnapshot(q, (snap) => {
-    const box = document.getElementById('messages');
-    box.innerHTML = '';
-    const docs = snap.docs;
-    
-    docs.forEach((d, index) => {
-        const m = d.data();
-        const side = m.senderId === myId ? 'me' : 'them';
-        const isLastMessage = index === docs.length - 1;
-        
-        // بناء الفقاعة
-        let content = `<div class="msg-row ${side}"><div class="bubble ${side}">${m.text}</div></div>`;
-        
-        // إضافة الحالة (Seen أو التوقيت) أسفل آخر رسالة فقط
-        if (isLastMessage) {
-            let statusText = "";
-            if (side === 'me') {
-                // إذا كانت رسالتي: تظهر Seen أو وقت الإرسال
-                statusText = m.seen ? 'Seen' : `Sent ${formatRelativeTime(m.timestamp)}`;
-            } else {
-                // إذا كانت رسالتهم: يظهر وقت وصولها فقط
-                statusText = formatRelativeTime(m.timestamp);
-            }
-            content += `<div class="msg-status">${statusText}</div>`;
-        }
-
-        box.innerHTML += content;
-    });
-    box.scrollTop = box.scrollHeight;
-});
-
-// 4. عند إرسال رسالة جديدة، تأكد من إضافة seen: false
-window.sendMsg = async function() {
-    const inp = document.getElementById('msgInput');
-    const text = inp.value.trim();
-    if (!text || !activeUserId) return;
-    
-    const chatId = [myId, activeUserId].sort().join('__');
-    inp.value = '';
-    
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
-      text,
-      senderId: myId,
-      timestamp: serverTimestamp(),
-      seen: false // تبدأ الحالة بـ Sent
-    });
-};
 
     document.getElementById('loginAvatarInput').addEventListener('change', e => {
       const file = e.target.files[0];
