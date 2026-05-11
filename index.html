@@ -333,7 +333,8 @@
       await updateOnlineStatus(true);
       showApp();
     }
-function formatRelativeTime(timestamp) {
+
+    function formatRelativeTime(timestamp) {
     if (!timestamp) return "Just now";
     const now = new Date();
     const msgDate = timestamp.toDate();
@@ -344,7 +345,9 @@ function formatRelativeTime(timestamp) {
     if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + "h ago";
     return msgDate.toLocaleDateString();
 }
-    unsubMessages = onSnapshot(q, snap => {
+    
+
+unsubMessages = onSnapshot(q, snap => {
     const box = document.getElementById('messages');
     box.innerHTML = '';
     const docs = snap.docs;
@@ -373,7 +376,6 @@ function formatRelativeTime(timestamp) {
     });
     box.scrollTop = box.scrollHeight;
 });
-    
 // استدعي هذه الوظيفة داخل openChat
 function openChat(id, name, avatar) {
     activeUserId = id;
