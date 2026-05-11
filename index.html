@@ -13,7 +13,21 @@
       --hover: #1a1a1a; --online: #0095f6;
     }
     body { font-family: -apple-system, sans-serif; background: var(--bg); height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+.msg-status {
+    font-size: 11px;
+    color: #8e8e8e; /* رمادي خفيف */
+    margin: 2px 14px 8px 14px; /* مسافة جانبية ليكون تحت الفقاعة */
+    font-weight: 400;
+}
 
+.me + .msg-status {
+    text-align: right; /* محاذاة لليمين لرسائلي */
+}
+
+.them + .msg-status {
+    text-align: left; /* محاذاة لليسار لرسائل الطرف الآخر */
+}
     /* LOGIN */
     .login-screen { width: 100%; max-width: 360px; padding: 40px 32px; display: flex; flex-direction: column; gap: 16px; background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border); }
     .login-screen h2 { font-size: 22px; font-weight: 600; color: var(--text); text-align: center; }
@@ -27,19 +41,7 @@
     .avatar-upload-circle img { width: 100%; height: 100%; object-fit: cover; }
     .avatar-upload-circle input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .avatar-upload-label { font-size: 12px; color: var(--text2); }
-.msg-status {
-    font-size: 10px;
-    color: var(--text3);
-    margin-top: 2px;
-    text-align: left;
-}
-.me .msg-status {
-    text-align: right;
-}
-.seen-text {
-    color: var(--text2);
-    font-weight: 500;
-}
+
     /* APP */
     .app { display: none; width: 100%; max-width: 960px; height: 100dvh; background: var(--bg); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
     .wrap { display: flex; height: 100%; }
@@ -331,32 +333,47 @@
       await updateOnlineStatus(true);
       showApp();
     }
-    window.sendMsg = async function() {
-    const inp = document.getElementById('msgInput');
-    const text = inp.value.trim();
-    if (!text || !activeUserId) return;
-    
-    const chatId = [myId, activeUserId].sort().join('__');
-    inp.value = '';
-    
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
-      text,
-      senderId: myId,
-      timestamp: serverTimestamp(),
-      seen: false // الرسالة تبدأ كـ غير مقروءة
-    });
-}
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return "Just now";
+    const now = new Date();
+    const msgDate = timestamp.toDate();
+    const diffInSeconds = Math.floor((now - msgDate) / 1000);
 
-    async function markMessagesAsSeen(otherId) {
-    const chatId = [myId, otherId].sort().join('__');
-    const q = query(collection(db, 'chats', chatId, 'messages'), where("senderId", "==", otherId), where("seen", "==", false));
-    
-    const snap = await getDocs(q);
-    snap.forEach(async (d) => {
-        await updateDoc(doc(db, 'chats', chatId, 'messages', d.id), { seen: true });
-    });
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + "m ago";
+    if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + "h ago";
+    return msgDate.toLocaleDateString();
 }
+    unsubMessages = onSnapshot(q, snap => {
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
+    const docs = snap.docs;
+    
+    docs.forEach((d, index) => {
+        const m = d.data();
+        const side = m.senderId === myId ? 'me' : 'them';
+        const isLastMessage = index === docs.length - 1;
+        
+        // بناء حالة الرسالة (Seen أو الوقت المنقضي)
+        let statusHtml = '';
+        if (side === 'me' && isLastMessage) {
+            const timeStr = formatRelativeTime(m.timestamp);
+            const statusText = m.seen ? 'Seen' : `Sent ${timeStr}`;
+            statusHtml = `<div class="msg-status">${statusText}</div>`;
+        }
 
+        box.innerHTML += `
+            <div class="msg-row ${side}">
+                <div class="bubble ${side}">
+                    ${m.text}
+                </div>
+            </div>
+            ${statusHtml}
+        `;
+    });
+    box.scrollTop = box.scrollHeight;
+});
+    
 // استدعي هذه الوظيفة داخل openChat
 function openChat(id, name, avatar) {
     activeUserId = id;
