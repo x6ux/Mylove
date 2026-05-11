@@ -27,7 +27,45 @@
     .avatar-upload-circle img { width: 100%; height: 100%; object-fit: cover; }
     .avatar-upload-circle input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .avatar-upload-label { font-size: 12px; color: var(--text2); }
+/* عداد الرسائل غير المقروءة في القائمة الجانبية */
+.unread-badge {
+    background: #ff3b30;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    margin-left: auto;
+}
 
+/* الإشعار العلوي المنبثق (نفس ستايل إنستغرام) */
+.push-notif {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1c1c1c;
+    border: 1px solid #363636;
+    padding: 10px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 9999;
+    animation: slideDown 0.4s ease-out;
+    cursor: pointer;
+    width: 90%;
+    max-width: 350px;
+    color: #fff;
+}
+
+@keyframes slideDown {
+    from { transform: translate(-50%, -100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
     /* APP */
     .app { display: none; width: 100%; max-width: 960px; height: 100dvh; background: var(--bg); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
     .wrap { display: flex; height: 100%; }
@@ -415,30 +453,111 @@
       renderUsers(allUsers);
     });
   }
+  
+import { 
+    getFirestore, collection, doc, setDoc, onSnapshot, addDoc, query, orderBy, 
+    serverTimestamp, limit, where, getDocs, updateDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  function renderUsers(users) {
+  
+// مصفوفة لتخزين العدادات محلياً
+let unreadCounts = {};
+
+// 1. وظيفة عرض الإشعار المنبثق العلوي
+function showPushNotification(senderName, messageText) {
+    const existing = document.querySelector('.push-notif');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'push-notif';
+    toast.innerHTML = `
+        <div style="font-size:14px;">
+            <b style="color:#0095f6">${senderName}</b>: 
+            <span>${messageText.substring(0, 35)}${messageText.length > 35 ? '...' : ''}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    // صوت تنبيه خفيف
+    new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3').play().catch(()=>{});
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+// 2. تحديث قائمة المستخدمين مع العداد وحالة (Sent/Seen)
+function renderUsers(users) {
     const list = document.getElementById('usersList');
     list.innerHTML = '';
+    
     users.forEach(u => {
-      const item = document.createElement('div');
-      item.className = 'user-item' + (activeUserId === u.id ? ' active' : '');
-      const avatarHtml = u.avatar
-        ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-        : `<span style="font-weight:bold;color:#0095f6;font-size:18px;">${u.name[0].toUpperCase()}</span>`;
-      item.innerHTML = `
-        <div class="avatar" style="background:#262626;">
-          ${avatarHtml}
-          ${u.online ? '<div class="online-ring"></div>' : ''}
-        </div>
-        <div style="flex:1; overflow:hidden;">
-          <div style="font-size:13px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.name}</div>
-          <div style="font-size:12px; color:#a8a8a8;">${u.bio ? u.bio : (u.online ? 'Active now' : 'Offline')}</div>
-        </div>
-      `;
-      item.onclick = () => openChat(u.id, u.name, u.avatar || '');
-      list.appendChild(item);
+        const item = document.createElement('div');
+        item.className = 'user-item' + (activeUserId === u.id ? ' active' : '');
+        const statusId = `status-${u.id}`;
+        const badgeId = `badge-${u.id}`;
+        
+        const avatarHtml = u.avatar
+            ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+            : `<span style="font-weight:bold;color:#0095f6;font-size:18px;">${u.name[0].toUpperCase()}</span>`;
+
+        item.innerHTML = `
+            <div class="avatar" style="background:#262626;">
+                ${avatarHtml}
+                ${u.online ? '<div class="online-ring"></div>' : ''}
+            </div>
+            <div style="flex:1; overflow:hidden;">
+                <div style="font-size:13px; color:#fff; display:flex; align-items:center;">
+                    ${u.name}
+                    <span id="${badgeId}" class="unread-badge" style="display:none;">0</span>
+                </div>
+                <div id="${statusId}" style="font-size:12px; color:#a8a8a8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${u.online ? 'Active now' : 'Offline'}
+                </div>
+            </div>
+        `;
+
+        // مراقبة الرسائل الجديدة لكل مستخدم (للإشعارات والعداد)
+        const chatId = [myId, u.id].sort().join('__');
+        const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'desc'), limit(1));
+        
+        onSnapshot(q, snap => {
+            if (!snap.empty) {
+                const lastMsg = snap.docs[0].data();
+                const statusEl = document.getElementById(statusId);
+                const badgeEl = document.getElementById(badgeId);
+                const isMe = lastMsg.senderId === myId;
+                const time = formatRelativeTime(lastMsg.timestamp);
+
+                // تحديث نص الحالة (Sent/Seen)
+                if (statusEl) {
+                    if (isMe) {
+                        statusEl.textContent = lastMsg.seen ? 'Seen' : `Sent ${time}`;
+                        statusEl.style.color = lastMsg.seen ? '#a8a8a8' : '#0095f6';
+                    } else {
+                        statusEl.textContent = lastMsg.text;
+                        // إذا كانت الرسالة جديدة ولم تُقرأ وأنا لست في المحادثة
+                        if (!lastMsg.seen && activeUserId !== u.id) {
+                            badgeEl.style.display = 'block';
+                            badgeEl.textContent = '1'; 
+                            // إظهار إشعار علوي إذا كانت الرسالة وصلت "الآن"
+                            const msgTime = lastMsg.timestamp?.toDate().getTime();
+                            if (msgTime && (Date.now() - msgTime < 5000)) {
+                                showPushNotification(u.name, lastMsg.text);
+                            }
+                        } else {
+                            badgeEl.style.display = 'none';
+                        }
+                    }
+                }
+            }
+        });
+
+        item.onclick = () => openChat(u.id, u.name, u.avatar || '');
+        list.appendChild(item);
     });
-  }
+}
 
   window.filterUsers = function() {
     const q = document.getElementById('searchInput').value.toLowerCase();
