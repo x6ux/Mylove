@@ -334,20 +334,35 @@
       showApp();
     }
 
-    function formatRelativeTime(timestamp) {
+// 1. دالة حساب الوقت النسبي (نفس الانستجرام)
+function formatRelativeTime(timestamp) {
     if (!timestamp) return "Just now";
     const now = new Date();
     const msgDate = timestamp.toDate();
     const diffInSeconds = Math.floor((now - msgDate) / 1000);
 
-    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 30) return "Just now";
+    if (diffInSeconds < 60) return diffInSeconds + "s ago";
     if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + "m ago";
     if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + "h ago";
     return msgDate.toLocaleDateString();
 }
-    
 
-unsubMessages = onSnapshot(q, snap => {
+// 2. تحديث الرسائل لتصبح Seen عند فتح المحادثة
+async function markAsSeen(chatId, otherId) {
+    const q = query(
+        collection(db, 'chats', chatId, 'messages'), 
+        where("senderId", "==", otherId), 
+        where("seen", "==", false)
+    );
+    const snap = await getDocs(q);
+    snap.forEach(async (d) => {
+        await updateDoc(doc(db, 'chats', chatId, 'messages', d.id), { seen: true });
+    });
+}
+
+// 3. الجزء المطور لعرض الرسائل (داخل unsubMessages)
+unsubMessages = onSnapshot(q, (snap) => {
     const box = document.getElementById('messages');
     box.innerHTML = '';
     const docs = snap.docs;
@@ -357,31 +372,43 @@ unsubMessages = onSnapshot(q, snap => {
         const side = m.senderId === myId ? 'me' : 'them';
         const isLastMessage = index === docs.length - 1;
         
-        // بناء حالة الرسالة (Seen أو الوقت المنقضي)
-        let statusHtml = '';
-        if (side === 'me' && isLastMessage) {
-            const timeStr = formatRelativeTime(m.timestamp);
-            const statusText = m.seen ? 'Seen' : `Sent ${timeStr}`;
-            statusHtml = `<div class="msg-status">${statusText}</div>`;
+        // بناء الفقاعة
+        let content = `<div class="msg-row ${side}"><div class="bubble ${side}">${m.text}</div></div>`;
+        
+        // إضافة الحالة (Seen أو التوقيت) أسفل آخر رسالة فقط
+        if (isLastMessage) {
+            let statusText = "";
+            if (side === 'me') {
+                // إذا كانت رسالتي: تظهر Seen أو وقت الإرسال
+                statusText = m.seen ? 'Seen' : `Sent ${formatRelativeTime(m.timestamp)}`;
+            } else {
+                // إذا كانت رسالتهم: يظهر وقت وصولها فقط
+                statusText = formatRelativeTime(m.timestamp);
+            }
+            content += `<div class="msg-status">${statusText}</div>`;
         }
 
-        box.innerHTML += `
-            <div class="msg-row ${side}">
-                <div class="bubble ${side}">
-                    ${m.text}
-                </div>
-            </div>
-            ${statusHtml}
-        `;
+        box.innerHTML += content;
     });
     box.scrollTop = box.scrollHeight;
 });
-// استدعي هذه الوظيفة داخل openChat
-function openChat(id, name, avatar) {
-    activeUserId = id;
-    markMessagesAsSeen(id); // تحديث الحالة فور الدخول
-    // ... باقي كود فتح الشات ...
-}
+
+// 4. عند إرسال رسالة جديدة، تأكد من إضافة seen: false
+window.sendMsg = async function() {
+    const inp = document.getElementById('msgInput');
+    const text = inp.value.trim();
+    if (!text || !activeUserId) return;
+    
+    const chatId = [myId, activeUserId].sort().join('__');
+    inp.value = '';
+    
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      text,
+      senderId: myId,
+      timestamp: serverTimestamp(),
+      seen: false // تبدأ الحالة بـ Sent
+    });
+};
 
     document.getElementById('loginAvatarInput').addEventListener('change', e => {
       const file = e.target.files[0];
